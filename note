@@ -1,0 +1,51 @@
+
+
+先安装rabbitmq服务端。rabbitmq 包含Exchange消息队列交换机和Queue消息队列
+
+组成部分说明：
+
+Broker：rabbitmq服务端，消息队列服务进程，此进程包括两个部分：Exchange和Queue
+Exchange：消息队列交换机，按一定的规则将消息路由转发到某个队列，对消息进行过虑。
+Queue：消息队列，存储消息的队列，消息到达队列并转发给指定的
+Producer：消息生产者，即生产方客户端，生产方客户端将消息发送
+Consumer：消息消费者，即消费方客户端，接收MQ转发的消息。
+
+生产者发送流程
+Producer与 Broker建立tcp连接
+Producer与 rabbitmq建立信道(信息通道)channel
+Producer将消息通过信道发送至Broker，由交换机Exchange负责转发
+Exchange将消息转发到指定的Queue（队列）
+
+消费者接收流程
+Consumer与 rabbitmq客户端Broker建立tcp连接
+Consumer与 rabbitmq建立信道(信息通道)channel
+Consumer 监听指定的Queue
+有消息到达Broker将消息发送到Consumer
+Consumer接收到消息，处理完毕通过ack回复。
+
+RabbitMQ的消息确认ACK机制
+1、什么是消息确认ACK。
+    答：如果在处理消息的过程中，消费者的服务器在处理消息的时候出现异常，
+那么可能这条正在处理的消息就没有完成消息消费，数据就会丢失。为了确保数据不会丢失，RabbitMQ支持消息确定-ACK。
+
+2、ACK的消息确认机制。
+　　答：ACK机制是消费者从RabbitMQ收到消息并处理完成后，反馈给RabbitMQ，
+RabbitMQ收到反馈后才将此消息从队列中删除。
+    如果一个消费者在处理消息出现了网络不稳定、服务器异常等现象，那么就不会有ACK反馈，
+RabbitMQ会认为这个消息没有正常消费，会将消息重新放入队列中。
+　　如果在集群的情况下，RabbitMQ会立即将这个消息推送给这个在线的其他消费者。这种机制保证了在消费者服务端故障的时候，
+不丢失任何消息和任务。消息永远不会从RabbitMQ中删除，只有当消费者正确发送ACK反馈，RabbitMQ确认收到后，
+消息才会从RabbitMQ服务器的数据中删除。消息的ACK确认机制默认是打开的。
+
+3、ACK机制的开发注意事项。
+　　答：如果忘记了ACK，那么后果很严重。当Consumer退出时候，Message会一直重新分发。
+然后RabbitMQ会占用越来越多的内容，由于RabbitMQ会长时间运行，因此这个"内存泄漏"是致命的。
+
+
+自动ack弊端
+1.可能导致消息丢失、
+2.源源不断的把消息推送给客户端，而不管客户端能否消费的完
+手动ack注意
+1.消费的时候没有出异常，正常运行。如果出现异常导致未能ack，
+再分发此条消息还是会出现异常，那么异常消息永远都再队列里，占用很大内存。
+2.

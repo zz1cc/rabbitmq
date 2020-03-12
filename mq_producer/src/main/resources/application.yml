@@ -1,0 +1,33 @@
+server:
+  port: 8080
+spring:
+  application:
+    name: rabbit_test
+  rabbitmq:
+    host: localhost
+    port: 5672
+    username: guest
+    password: guest
+    virtual-host: test
+    # 如果consumer只是接收消息而不发送，就不用配置template相关内容。
+    template:
+      retry:
+        # 失败重试
+        enabled: true
+        # 第一次重试的间隔时长
+        initial-interval: 10000ms
+        # 最长重试间隔，超过这个间隔将不再重试
+        max-interval: 300000ms
+        # 下次重试间隔的倍数，此处是2即下次重试间隔是上次的2倍
+        multiplier: 2
+      # 缺省的交换机名称，此处配置后，发送消息如果不指定交换机就会使用这个
+      exchange: test.exchange
+    # 生产者确认机制，确保消息会正确发送，如果发送失败会有错误回执，从而触发重试
+    publisher-confirm: true
+    publisher-returns: true
+    # 开启ack NONE：不确认  AUTO：自动确认  MANUAL：手动确认
+    listener:
+      direct:
+        acknowledge-mode: manual
+      simple:
+        acknowledge-mode: manual
